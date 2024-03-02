@@ -11,4 +11,7 @@
     <string name="edit_post">Изменить пост</string>
     <string name="id">Введите ID пользователя</string>
     <string name="enter_id_post">Введите ID поста</string>
+    <string name="back"><![CDATA[<-]]></string>
+    <string name="enter_post_id">Введите айди поста, который нужно удалить</string>
+    <string name="go_to_second_fragment"><![CDATA[->]]></string>
 </resources>

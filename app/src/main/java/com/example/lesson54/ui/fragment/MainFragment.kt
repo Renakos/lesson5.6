@@ -19,8 +19,6 @@ class MainFragment : Fragment() {
     private val viewModel: MainViewModel by activityViewModels()
     private var _binding: FragmentMainBinding? = null
     private val binding: FragmentMainBinding get() = _binding!!
-    private val postId = 1
-
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
@@ -31,11 +29,17 @@ class MainFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        checkForData()
+        setupNextFragmentButton()
         setupUpdateButton()
         setupCreateButton()
         setupEditButton()
-        setupDeleteButton()
+        checkForData()
+    }
+
+    private fun setupNextFragmentButton() = with(binding) {
+        btnSecFragment.setOnClickListener {
+            findNavController().navigate(R.id.action_mainFragment_to_secondFragment)
+        }
     }
 
 
@@ -44,15 +48,13 @@ class MainFragment : Fragment() {
             val id = binding.etId.text.toString().toInt()
             val title = binding.etTitle.text.toString().trim()
             val body = binding.etBody.text.toString().trim()
-            val post = Post(id, title = title, body = body, userId = id)
+            val post = Post(title = title, body = body, userId = id)
             viewModel.updatePost(
-                postId,
-                post
+                post, onFailure = { message ->
+                    Log.e("error", message)
+                }
 
-            ) { s, throwable ->
-                Log.e("error", s, throwable)
-                checkForData()
-            }
+            )
             checkForData()
 
             findNavController().navigate(R.id.action_mainFragment_to_secondFragment)
@@ -68,7 +70,7 @@ class MainFragment : Fragment() {
                 Post(title = title, body = body, userId = id)
 
             viewModel.createNewPost(
-                newPost
+                post = newPost
             ) { message, throwable ->
                 Log.e("error", message, throwable)
                 checkForData()
@@ -80,42 +82,18 @@ class MainFragment : Fragment() {
     }
 
     private fun setupEditButton() = with(binding) {
-        btnUpdatePost.setOnClickListener {
+        btnEditPost.setOnClickListener {
             val id = etId.text.toString().toInt()
-            val postId = etIdPost.text.toString().toInt()
-            val postParameter = HashMap<String, Any>()
             val title = etTitle.text.toString()
             val body = etBody.text.toString()
-            val editedPost =
-                Post(id = 2, title = title, body = body, userId = id)
-            postParameter["id"] = id
-            postParameter["postId"] = postId
-            viewModel.editPost(editedPost, postParameter) { s, throwable ->
-                Log.e("error", s, throwable)
-                checkForData()
-            }
-            checkForData()
-            findNavController().navigate(R.id.action_mainFragment_to_secondFragment)
-
-        }
-    }
-
-    private fun setupDeleteButton() = with(binding) {
-        btnDeletePost.setOnClickListener {
-            val id = etId.text.toString().toInt()
-            val postId = etIdPost.text.toString().toInt()
-            val title = etTitle.text.toString()
-            val body = etBody.text.toString()
-            val editedPost =
-                Post(id = 3, title = title, body = body, userId = id)
-            checkForData()
-            viewModel.deletePost(editedPost, postId) { s, throwable ->
-                Log.e("error", s, throwable)
-                checkForData()
+            val editedPost = Post(title = title, body = body, userId = id)
+            viewModel.editPost(editedPost) { message, throwable ->
+                Log.e("error", message, throwable)
             }
             findNavController().navigate(R.id.action_mainFragment_to_secondFragment)
         }
     }
+
 
     override fun onDestroyView() {
         super.onDestroyView()
@@ -123,7 +101,6 @@ class MainFragment : Fragment() {
     }
 
     private fun checkForData() {
-        Log.e("DataBase", viewModel.allDatabasePosts.toString())
         Log.e("DataBase", viewModel.allPosts.toString())
     }
 

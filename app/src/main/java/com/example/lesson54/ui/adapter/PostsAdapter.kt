@@ -8,16 +8,17 @@ import androidx.recyclerview.widget.RecyclerView
 import com.example.lesson54.R
 import com.example.lesson54.data.model.Post
 
-class PostsAdapter() :
-    RecyclerView.Adapter<PostsAdapter.CharacterViewHolder>() {
+class PostsAdapter : RecyclerView.Adapter<PostsAdapter.CharacterViewHolder>() {
 
-    private var originalPosts = mutableListOf<Post>()
-//    private var filteredPosts: List<Post> = originalPosts
+     var originalPosts = mutableListOf<Post>()
+
+    //    private var filteredPosts: List<Post> = originalPosts
 //    private var posts = listOf<Post>()
+    private var onItemLongClickListener: OnItemLongClickListener? = null
+
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): CharacterViewHolder {
-        val itemView = LayoutInflater.from(parent.context)
-            .inflate(R.layout.item, parent, false)
+        val itemView = LayoutInflater.from(parent.context).inflate(R.layout.item, parent, false)
         return CharacterViewHolder(itemView)
     }
 
@@ -33,24 +34,31 @@ class PostsAdapter() :
     fun updateData(newData: List<Post>) {
         originalPosts.clear()
         originalPosts.addAll(newData)
-        originalPosts.distinct()
+        originalPosts.distinctBy {
+            it.id
+        }
         notifyDataSetChanged()
     }
 
     inner class CharacterViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
-        private val titleTextView: TextView =
-            itemView.findViewById(R.id.tv_title)
-        private val descTextView: TextView =
-            itemView.findViewById(R.id.tv_desc)
+        private val titleTextView: TextView = itemView.findViewById(R.id.tv_title)
+        private val descTextView: TextView = itemView.findViewById(R.id.tv_desc)
 
         fun bind(post: Post) {
             titleTextView.text = post.title
             descTextView.text = post.body
+            itemView.setOnLongClickListener {
+                val position = adapterPosition
+                if (position != RecyclerView.NO_POSITION) {
+                    onItemLongClickListener?.onItemLongClick(position)
+                }
+                true
+            }
         }
 
     }
 
-//    fun getFilter(): Filter {
+    //    fun getFilter(): Filter {
 //        return object : Filter() {
 //            override fun performFiltering(constraint: CharSequence?): FilterResults {
 //                val filteredList = mutableListOf<Post>()
@@ -79,8 +87,13 @@ class PostsAdapter() :
 //
 //        }
 //    }
+    fun setOnItemLongClickListener(listener: OnItemLongClickListener) {
+        this.onItemLongClickListener = listener
+    }
 
-
+    interface OnItemLongClickListener {
+        fun onItemLongClick(position: Int)
+    }
 }
 
 

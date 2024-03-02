@@ -1,5 +1,6 @@
 package com.example.lesson54.data.repository
 
+import android.util.Log
 import androidx.lifecycle.LiveData
 import com.example.lesson54.App
 import com.example.lesson54.data.local.PostDao
@@ -15,6 +16,10 @@ class Repository {
     private val postDao: PostDao = App.db.postDao()
     private val apiService: PostsApiService = RetrofitClient.postsApiService
     val allPosts: LiveData<MutableList<Post>> = postDao.getAllPosts()
+
+    init {
+        Log.e("room", postDao.getAllPosts().value.toString())
+    }
 
     fun createNewPost(
         post: Post,
@@ -35,11 +40,12 @@ class Repository {
     }
 
     fun editPost(
-        postParams: HashMap<String, Any>,
+        postId: Int,
+        post: Post,
         onResponse: (Post) -> Unit,
         onFailure: (String, Throwable) -> Unit
     ) {
-        apiService.editPost(postParams).enqueue(object : Callback<Post> {
+        apiService.editPost(postId, post).enqueue(object : Callback<Post> {
             override fun onResponse(call: Call<Post>, response: Response<Post>) {
                 if (response.isSuccessful && response.body() != null) {
                     onResponse(response.body()!!)
@@ -52,8 +58,8 @@ class Repository {
         })
     }
 
-    fun deletePost(postId: Int, onResponse: () -> Unit, onFailure: (String, Throwable) -> Unit) {
-        apiService.deletePost(postId).enqueue(object : Callback<Post> {
+    fun deletePost(post: Post, onResponse: () -> Unit, onFailure: (String, Throwable) -> Unit) {
+        apiService.deletePost(post.id).enqueue(object : Callback<Post> {
             override fun onResponse(call: Call<Post>, response: Response<Post>) {
                 if (response.isSuccessful) {
                     onResponse()
@@ -71,15 +77,14 @@ class Repository {
 //    }
 
     fun updatePost(
-        postId: Int,
         post: Post,
-        onResponse: () -> Unit,
-        onFailure: (String, Throwable) -> Unit
+        onResponse: (post: Post) -> Unit,
+        onFailure: (message: String, Throwable) -> Unit
     ) {
-        apiService.updatePost(postId, post).enqueue(object : Callback<Post> {
+        apiService.updatePost(post.id, post).enqueue(object : Callback<Post> {
             override fun onResponse(call: Call<Post>, response: Response<Post>) {
-                if (response.isSuccessful) {
-                    onResponse()
+                if (response.isSuccessful && response.body() != null) {
+                    onResponse(response.body()!!)
                 }
             }
 
@@ -87,5 +92,17 @@ class Repository {
                 onFailure(t.message ?: "Unknown error!", t)
             }
         })
+    }
+
+    fun insertPostRoom(post: Post) {
+        return postDao.insertPost(post)
+    }
+
+    fun deletePostRoom(post: Post) {
+        return postDao.deletePost(post)
+    }
+
+    fun updatePostRoom(post: Post) {
+        postDao.updatePost(post)
     }
 }

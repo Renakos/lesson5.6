@@ -1,14 +1,13 @@
 package com.example.lesson54.ui.fragment
 
 import android.os.Bundle
-import android.text.Editable
-import android.text.TextWatcher
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
+import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.lesson54.data.viewmodel.MainViewModel
 import com.example.lesson54.databinding.FragmentSecondBinding
@@ -20,11 +19,10 @@ class SecondFragment : Fragment() {
     private val viewModel: MainViewModel by activityViewModels()
     private var _binding: FragmentSecondBinding? = null
     private val binding: FragmentSecondBinding get() = _binding!!
-    private var adapter = PostsAdapter()
+    private val adapter = PostsAdapter()
 
     override fun onCreateView(
-        inflater: LayoutInflater, container: ViewGroup?,
-        savedInstanceState: Bundle?
+        inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
     ): View {
         _binding = FragmentSecondBinding.inflate(inflater, container, false)
         return binding.root
@@ -32,15 +30,15 @@ class SecondFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        setupRecyclerView()
-        setupSearch()
         observePosts()
+        setupRecyclerView()
+        setupRecyclerViewDelete()
+        setupBackButton()
     }
 
     private fun observePosts() {
-        viewModel.allPosts.observe(viewLifecycleOwner) { posts ->
-            Log.e("data", "observePosts: $posts")
-            adapter.updateData(posts)
+        viewModel.allPosts.observe(viewLifecycleOwner) {
+            adapter.updateData(it)
         }
     }
 
@@ -49,17 +47,22 @@ class SecondFragment : Fragment() {
         binding.rv.layoutManager = LinearLayoutManager(requireContext())
     }
 
-    private fun setupSearch() {
-        binding.etSearch.addTextChangedListener(object : TextWatcher {
-            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
-
-            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
-//                adapter.getFilter().filter(s)
+    private fun setupRecyclerViewDelete() {
+        adapter.setOnItemLongClickListener(object : PostsAdapter.OnItemLongClickListener {
+            override fun onItemLongClick(position: Int) {
+                val postToDelete = adapter.originalPosts[position]
+                viewModel.deletePost(post = postToDelete, onFailure = { message: String ->
+                    Log.e("failureDelete", message)
+                })
             }
 
-            override fun afterTextChanged(s: Editable?) {}
-
         })
+    }
+
+    private fun setupBackButton() {
+        binding.btnBack.setOnClickListener {
+            findNavController().navigateUp()
+        }
     }
 
     override fun onDestroyView() {
